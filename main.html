@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rettcoin Trading Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+        .price { font-size: 24px; font-weight: bold; }
+        .wallet { margin: 20px 0; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        input { width: 100px; padding: 5px; margin: 5px; text-align: center; }
+        canvas { max-width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rettcoin Trading Simulator</h1>
+        <p class="price">Preis: <span id="price">100</span> $</p>
+        <div class="wallet">
+            <p>Guthaben: <span id="balance">1000</span> $</p>
+            <p>Rettcoins: <span id="coins">0</span></p>
+            <p>Wert der Rettcoins: <span id="coinValue">0</span> $</p>
+        </div>
+        <input type="number" id="amount" placeholder="Menge" step="0.01" min="0.01">
+        <button onclick="buyCoin()">Kaufen</button>
+        <button onclick="sellCoin()">Verkaufen</button>
+        <canvas id="priceChart"></canvas>
+    </div>
+
+    <script>
+        let balance = 1000;
+        let coins = 0;
+        let price = 100;
+        let priceHistory = [100];
+        let labels = ["Start"];
+        let trend = (Math.random() - 0.5) * 200; // Initial zufälliger Trend
+
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rettcoin Preis',
+                    data: priceHistory,
+                    borderColor: 'blue',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        function updateUI() {
+            document.getElementById('price').innerText = price;
+            document.getElementById('balance').innerText = balance.toFixed(2);
+            document.getElementById('coins').innerText = coins.toFixed(4);
+            document.getElementById('coinValue').innerText = (coins * price).toFixed(2);
+        }
+
+        function buyCoin() {
+            let amount = parseFloat(document.getElementById('amount').value);
+            if (isNaN(amount) || amount <= 0) {
+                alert("Bitte eine gültige Menge eingeben!");
+                return;
+            }
+            let cost = amount * price;
+            if (balance >= cost) {
+                balance -= cost;
+                coins += amount;
+                updateUI();
+            } else {
+                alert("Nicht genug Geld!");
+            }
+        }
+
+        function sellCoin() {
+            let amount = parseFloat(document.getElementById('amount').value);
+            if (isNaN(amount) || amount <= 0) {
+                alert("Bitte eine gültige Menge eingeben!");
+                return;
+            }
+            if (coins >= amount) {
+                balance += amount * price;
+                coins -= amount;
+                updateUI();
+            } else {
+                alert("Nicht genug Rettcoins!");
+            }
+        }
+
+        function updatePrice() {
+            let volatility = Math.random() * 2; // Zufällige Volatilität zwischen 0 und 2
+            let changeAmount = (Math.random() - 0.5) * volatility * 500 + trend; // Zufällige Änderung mit Trend
+            changeAmount = Math.max(-500, Math.min(500, changeAmount)); // Begrenzung auf maximal ±500
+            price = Math.max(0, price + Math.floor(changeAmount));
+            priceHistory.push(price);
+            labels.push(new Date().toLocaleTimeString());
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = priceHistory;
+            chart.update();
+            updateUI();
+        }
+
+        function updateTrend() {
+            if (Math.random() < 0.5) { // 50% Wahrscheinlichkeit, dass sich der Trend ändert
+                trend = (Math.random() - 0.5) * 200;
+            }
+        }
+
+        setInterval(updatePrice, 2000);
+        setInterval(updateTrend, 30000);
+    </script>
+</body>
+</html>
